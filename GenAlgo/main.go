@@ -273,41 +273,50 @@ func readPointsFromFile(filename string) ([]Point, error) {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	if !scanner.Scan() {
-		return nil, fmt.Errorf("empty file")
-	}
+	var dimension int
+	var points []Point
+	inCoordSection := false
 
-	n, err := strconv.Atoi(scanner.Text())
-	if err != nil {
-		return nil, fmt.Errorf("invalid point count: %v", err)
-	}
-
-	points := make([]Point, 0, n)
 	for scanner.Scan() {
-		parts := strings.Fields(scanner.Text())
-		if len(parts) != 2 {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
 			continue
 		}
-		x, _ := strconv.ParseFloat(parts[0], 64)
-		y, _ := strconv.ParseFloat(parts[1], 64)
-		points = append(points, Point{x, y})
-	}
 
-	if len(points) != n {
-		return nil, fmt.Errorf("expected %d points, got %d", n, len(points))
-	}
-	return points, nil
-}
+		if strings.HasPrefix(line, "DIMENSION") {
+			parts := strings.Split(line, ":")
+			if len(parts) < 2 {
+				parts = strings.Split(line, " ")
+			}
+			dimStr := strings.TrimSpace(parts[1])
+			dimension, _ = strconv.Atoi(dimStr)
+			points = make([]Point, dimension)
+		}
 
-func generateRandomPoints(n int) []Point {
-	points := make([]Point, n)
-	for i := range points {
-		points[i] = Point{
-			x: rand.Float64() * 100,
-			y: rand.Float64() * 100,
+		if strings.HasPrefix(line, "NODE_COORD_SECTION") {
+			inCoordSection = true
+			continue
+		}
+
+		if inCoordSection && strings.HasPrefix(line, "EOF") {
+			break
+		}
+
+		if inCoordSection {
+			parts := strings.Fields(line)
+			if len(parts) < 3 {
+				continue
+			}
+			idx, _ := strconv.Atoi(parts[0])
+			x, _ := strconv.ParseFloat(parts[1], 64)
+			y, _ := strconv.ParseFloat(parts[2], 64)
+			if idx >= 1 && idx <= dimension {
+				points[idx-1] = Point{x, y}
+			}
 		}
 	}
-	return points
+
+	return points, nil
 }
 
 func main() {
@@ -316,13 +325,12 @@ func main() {
 
 	var (
 		inputFile     = flag.String("input", "", "Input file with city coordinates")
-		popSize       = flag.Int("pop", 5000, "Population size")
-		generations   = flag.Int("gens", 30000, "Number of generations")
-		tournament    = flag.Int("tournament", 100, "Tournament size")
+		popSize       = flag.Int("pop", 1000, "Population size")
+		generations   = flag.Int("gens", 2000, "Number of generations")
+		tournament    = flag.Int("tournament", 10, "Tournament size")
 		mutationRate  = flag.Float64("mut", 0.1, "Mutation rate")
 		eliteSize     = flag.Int("elite", 10, "Elite population size")
-		cacheSize     = flag.Int("cache", 100000, "LRU cache size")
-		randomCities  = flag.Int("random", 0, "Generate N random cities")
+		cacheSize     = flag.Int("cache", 10000, "LRU cache size")
 	)
 	flag.Parse()
 
@@ -330,9 +338,6 @@ func main() {
 	var err error
 
 	switch {
-	case *randomCities > 0:
-		points = generateRandomPoints(*randomCities)
-		fmt.Printf("Generated %d random cities\n", *randomCities)
 	case *inputFile != "":
 		points, err = readPointsFromFile(*inputFile)
 		if err != nil {

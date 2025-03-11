@@ -275,13 +275,13 @@ func main() {
 
 	var (
 		inputFile   = flag.String("input", "", "TSPLIB file")
-		numAnts     = flag.Int("ants", 150, "Number of ants")
+		numAnts     = flag.Int("ants", 50, "Number of ants")
 		alpha       = flag.Float64("alpha", 1.0, "Pheromone exponent")
 		beta        = flag.Float64("beta", 2.0, "Heuristic exponent")
 		rho         = flag.Float64("rho", 0.1, "Evaporation rate")
 		q           = flag.Float64("q", 100.0, "Pheromone quantity")
 		iterations  = flag.Int("iters", 100, "ACO iterations")
-		eliteAnts   = flag.Int("elite", 5, "Number of elite ants")
+		eliteAnts   = flag.Int("elite", 50, "Number of elite ants")
 	)
 	flag.Parse()
 
