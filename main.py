@@ -92,54 +92,57 @@ def plot_results(results, algorithm, tsp_file):
 
 
 def main():
-    tsp_file = "kroA100.tsp"
-    qdt_points = 100
-    for algo_name, config in ALGORITHMS.items():
-        print(f"  Running {algo_name} algorithm...")
-        results = []
+    tsp_files = get_tsp_files()
 
-        if algo_name == "genetic":
-            shortest_distance = math.inf
-            shortest_hyperparameters = {}
-            for _ in range(20):
-                population_size = randint(qdt_points * 2, qdt_points * 6)
-                mutation_rate = random.uniform(0, 1)
-                elite = random.randint(2, population_size // 10)
-                hyperparameters = {
-                    '-pop': population_size,
-                    '-mut': mutation_rate,
-                    '-elite': elite
-                }
-                distance = run_experiment(config, tsp_file, {
-                    '-pop': population_size,
-                    '-mut': mutation_rate,
-                    '-elite': elite
-                })
-                print(distance)
-                print(hyperparameters)
-                if distance < shortest_distance:
-                    shortest_distance = distance
-                    shortest_hyperparameters = hyperparameters
+    for tsp_file in tsp_files:
+        print(f"\nProcessing {tsp_file}...")
+        qdt_points = int(re.search(r"\d+", tsp_file).group())
+        for algo_name, config in ALGORITHMS.items():
+            print(f"  Running {algo_name} algorithm...")
+            results = []
 
-            print(shortest_distance)
-            print(shortest_hyperparameters)
+            if algo_name == "genetic":
+                shortest_distance = math.inf
+                shortest_hyperparameters = {}
+                for _ in range(20):
+                    population_size = randint(qdt_points * 2, qdt_points * 6)
+                    mutation_rate = random.uniform(0, 1)
+                    elite = random.randint(2, population_size // 10)
+                    hyperparameters = {
+                        '-pop': population_size,
+                        '-mut': mutation_rate,
+                        '-elite': elite
+                    }
+                    distance = run_experiment(config, tsp_file, {
+                        '-pop': population_size,
+                        '-mut': mutation_rate,
+                        '-elite': elite
+                    })
+                    print(distance)
+                    print(hyperparameters)
+                    if distance < shortest_distance:
+                        shortest_distance = distance
+                        shortest_hyperparameters = hyperparameters
+
+                print(shortest_distance)
+                print(shortest_hyperparameters)
 
 
-            # param_names = list(config['params'].keys())
-            # param_values = list(config['params'].values())
-            #
-            # for combination in product(*param_values):
-            #     params = dict(zip(param_names, combination))
-            #
-            #     try:
-            #         distance = run_experiment(config, tsp_file, params)
-            #         if distance:
-            #             results.append((params, distance))
-            #     except subprocess.CalledProcessError as e:
-            #         print(f"Error with {params}: {e}")
-            #
-            # if results:
-            #     plot_results(results, algo_name, tsp_file)
+                # param_names = list(config['params'].keys())
+                # param_values = list(config['params'].values())
+                #
+                # for combination in product(*param_values):
+                #     params = dict(zip(param_names, combination))
+                #
+                #     try:
+                #         distance = run_experiment(config, tsp_file, params)
+                #         if distance:
+                #             results.append((params, distance))
+                #     except subprocess.CalledProcessError as e:
+                #         print(f"Error with {params}: {e}")
+                #
+                # if results:
+                #     plot_results(results, algo_name, tsp_file)
 
 
 if __name__ == "__main__":

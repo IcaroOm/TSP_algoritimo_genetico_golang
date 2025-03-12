@@ -1,10 +1,28 @@
 {
-  "genetic": {
-    "-pop": 163,
-    "-mut": 0.5861844357608057,
-    "-elite": 11
+  "berlin52": {
+    "genetic": {
+      "shortestDistance": 0,
+      "-pop": 163,
+      "-mut": 0.5861844357608057,
+      "-elite": 11
+    }
   },
-  "aco": {
-
+  "kroB150": {
+    "shortestDistance": 40527.83,
+    "genetic": {
+      "-pop": 330,
+      "-mut": 0.2834506162935734,
+      "-elite": 4
+    }
+  },
+  "eil51": {
+    "genetic": {
+      "shortestDistance": 439.97,
+      "params": {
+        "-pop": 231,
+        "-mut": 0.01891569400522619,
+        "-elite": 18
+      }
+    }
   }
 }
