@@ -1,0 +1,28 @@
+{
+  "berlin52": {
+    "genetic": {
+      "shortest_distance": 8160.92,
+      "params": {
+        "-pop": 207,
+        "-mut": 0.2336281353566262,
+        "-elite": 11
+      }
+    },
+    "annealing": {
+      "shortest_distance": 7841.1,
+      "params": {
+        "-temp": 25567.79418862034,
+        "-cooling": 0.9652342919900513
+      }
+    },
+    "aco": {
+      "shortest_distance": 7544.37,
+      "params": {
+        "-ants": 287,
+        "-alpha": 1.5312653201764705,
+        "-beta": 1.7171954777649536,
+        "-iters": 500
+      }
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import random
@@ -93,17 +94,18 @@ def plot_results(results, algorithm, tsp_file):
 
 def main():
     tsp_files = get_tsp_files()
-
+    answer = {}
     for tsp_file in tsp_files:
         print(f"\nProcessing {tsp_file}...")
         qdt_points = int(re.search(r"\d+", tsp_file).group())
+        answer[tsp_file.split(".tsp")[0]] = {}
         for algo_name, config in ALGORITHMS.items():
             print(f"  Running {algo_name} algorithm...")
             results = []
 
+            shortest_distance = math.inf
+            shortest_hyperparameters = {}
             if algo_name == "genetic":
-                shortest_distance = math.inf
-                shortest_hyperparameters = {}
                 for _ in range(20):
                     population_size = randint(qdt_points * 2, qdt_points * 6)
                     mutation_rate = random.uniform(0, 1)
@@ -124,26 +126,57 @@ def main():
                         shortest_distance = distance
                         shortest_hyperparameters = hyperparameters
 
+                print("Melhores hyperparametros do algoritmo genetico")
                 print(shortest_distance)
                 print(shortest_hyperparameters)
+                answer[tsp_file.split(".tsp")[0]]["genetic"] = {"shortest_distance": shortest_distance, "params": shortest_hyperparameters}
+            elif algo_name == "aco":
+                for _ in range(40):
+                    ants = randint(qdt_points * 2, qdt_points * 6)
+                    alfa = random.uniform(1, 5)
+                    beta = random.uniform(1, 5)
+                    hyperparameters = {
+                        '-ants': ants,
+                        '-alpha': alfa,
+                        '-beta': beta,
+                        "-iters": 500
+                    }
+                    distance = run_experiment(config, tsp_file, hyperparameters)
+                    print(distance)
+                    print(hyperparameters)
+                    if distance < shortest_distance:
+                        shortest_distance = distance
+                        shortest_hyperparameters = hyperparameters
+                print("Melhores hyperparametros do algoritmo genetico")
+                print(shortest_distance)
+                print(shortest_hyperparameters)
+                answer[tsp_file.split(".tsp")[0]]["aco"] = {
+                "shortest_distance" : shortest_distance, "params": shortest_hyperparameters
+                }
+            elif algo_name == "annealing":
+                for _ in range(20):
+                    temperature = random.uniform(10000, 100000)
+                    cooling = random.uniform(0.9, 0.9999)
 
+                    hyperparameters = {
+                        "-temp": temperature,
+                        "-cooling": cooling
+                    }
+                    distance = run_experiment(config, tsp_file, hyperparameters)
+                    print(distance)
+                    print(hyperparameters)
+                    if distance < shortest_distance:
+                        shortest_distance = distance
+                        shortest_hyperparameters = hyperparameters
 
-                # param_names = list(config['params'].keys())
-                # param_values = list(config['params'].values())
-                #
-                # for combination in product(*param_values):
-                #     params = dict(zip(param_names, combination))
-                #
-                #     try:
-                #         distance = run_experiment(config, tsp_file, params)
-                #         if distance:
-                #             results.append((params, distance))
-                #     except subprocess.CalledProcessError as e:
-                #         print(f"Error with {params}: {e}")
-                #
-                # if results:
-                #     plot_results(results, algo_name, tsp_file)
+                    print("Melhores hyperparametros do anneling")
+                    print(shortest_distance)
+                    print(shortest_hyperparameters)
+                    answer[tsp_file.split(".tsp")[0]]["annealing"] = {
+                        "shortest_distance": shortest_distance, "params": shortest_hyperparameters
+                    }
 
-
+    with open("best_hyperparameters2.json", "w") as f:
+        f.write(json.dumps(answer))
 if __name__ == "__main__":
     main()

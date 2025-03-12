@@ -1,20 +1,4 @@
 {
-  "berlin52": {
-    "genetic": {
-      "shortestDistance": 0,
-      "-pop": 163,
-      "-mut": 0.5861844357608057,
-      "-elite": 11
-    }
-  },
-  "kroB150": {
-    "shortestDistance": 40527.83,
-    "genetic": {
-      "-pop": 330,
-      "-mut": 0.2834506162935734,
-      "-elite": 4
-    }
-  },
   "eil51": {
     "genetic": {
       "shortestDistance": 439.97,
@@ -22,6 +6,106 @@
         "-pop": 231,
         "-mut": 0.01891569400522619,
         "-elite": 18
+      }
+    },
+    "annealing": {
+      "shortestDistance": 440.18,
+      "params": {
+        "-temp": 82685.915401693,
+        "-cooling": 0.9228095476467898
+      }
+    },
+    "aco": {
+      "shortestDistance": 436.92,
+      "params": {
+        "-ants": 300,
+        "-alpha": 2,
+        "-beta": 1
+      }
+    }
+  },
+  "pr76": {
+    "genetic": {
+      "shortestDistance": 131948.67,
+      "params": {"-pop": 394, "-mut": 0.33778154008779326, "-elite": 22}
+    },
+    "annealing": {
+      "shortestDistance":109676.62,
+      "params": {"-temp": 40304.592427771255, "-cooling": 0.9692523350961358}
+    },
+    "aco": {
+      "genetic": {
+        "shortestDistance": 113511.02,
+        "params": {"-ants": 213, "-alpha": 2, "-beta": 1}
+      }
+    }
+  },
+  "st70": {
+    "genetic": {
+      "shortestDistance": 857.75,
+      "params": {
+        "-pop": 292,
+        "-mut": 0.17666010449123837,
+        "-elite": 13
+      }
+    },
+    "annealing": {
+      "shortestDistance": 696.82,
+      "params":{"-temp": 81681.57924092728, "-cooling": 0.945968446118258}
+    },
+    "aco": {
+      "shortestDistance": 685.71,
+      "params":{"-ants": 383, "-alpha": 1, "-beta": 5}
+    }
+  },
+  "kroA100": {
+    "genetic": {
+      "shortest_distance": 24052.73,
+      "params": {
+        "-pop": 484,
+        "-mut": 0.1535424284601219,
+        "-elite": 2
+      }
+    },
+    "annealing": {
+      "shortest_distance": 22046.21,
+      "params": {
+        "-temp": 66276.51476574285,
+        "-cooling": 0.9157872526889492
+      }
+    },
+    "aco": {
+      "shortest_distance": 21867.4,
+      "params": {
+        "-ants": 597,
+        "-alpha": 2,
+        "-beta": 5
+      }
+    }
+  },
+  "berlin52": {
+    "genetic": {
+      "shortest_distance": 8160.92,
+      "params": {
+        "-pop": 207,
+        "-mut": 0.2336281353566262,
+        "-elite": 11
+      }
+    },
+    "annealing": {
+      "shortest_distance": 7841.1,
+      "params": {
+        "-temp": 25567.79418862034,
+        "-cooling": 0.9652342919900513
+      }
+    },
+    "aco": {
+      "shortest_distance": 7544.37,
+      "params": {
+        "-ants": 287,
+        "-alpha": 1.5312653201764705,
+        "-beta": 1.7171954777649536,
+        "-iters": 500
       }
     }
   }
