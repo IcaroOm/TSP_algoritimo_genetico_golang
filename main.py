@@ -1,5 +1,9 @@
+import math
 import os
+import random
 import subprocess
+from random import randint
+
 import matplotlib.pyplot as plt
 import re
 from itertools import product
@@ -34,25 +38,28 @@ ALGORITHMS = {
     }
 }
 
+
 def get_tsp_files():
     """Get all .tsp files in input directory"""
     return [f for f in os.listdir(INPUT_DIR) if f.endswith('.tsp')]
+
 
 def run_experiment(algorithm, tsp_file, params):
     """Execute Go program for a specific TSP file"""
     cmd = [algorithm['exec'], '-input', os.path.join(INPUT_DIR, tsp_file)]
     for k, v in params.items():
         cmd.extend([k, str(v)])
-    
+
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
         check=True
     )
-    
+
     match = re.search(r'Best route distance: (\d+\.\d+)', result.stdout)
     return float(match.group(1)) if match else None
+
 
 def plot_results(results, algorithm, tsp_file):
     """Generate plots for specific TSP file"""
@@ -63,7 +70,7 @@ def plot_results(results, algorithm, tsp_file):
     for params, distance in results:
         main_param = list(params.keys())[0]
         param_groups[main_param].append((params[main_param], distance))
-    
+
     for i, (param, values) in enumerate(param_groups.items(), 1):
         plt.subplot(1, len(param_groups), i)
         x, y = zip(*sorted(values))
@@ -71,36 +78,69 @@ def plot_results(results, algorithm, tsp_file):
         plt.xlabel(param)
         plt.ylabel('Distance')
         plt.title(f'{tsp_file} - {param} vs Distance')
-    
+
     plt.tight_layout()
     plt.savefig(os.path.join(RESULTS_DIR, tsp_file, f'{algorithm}.png'))
     plt.close()
 
+
+# def choose_best_hyperparameter():
+#     tsp_files = get_tsp_files()
+#     for tsp_file in tsp_files:
+#
+#         for _ in range(10):
+
+
 def main():
-    tsp_files = get_tsp_files()
-    
-    for tsp_file in tsp_files:
-        print(f"\nProcessing {tsp_file}...")
-        
-        for algo_name, config in ALGORITHMS.items():
-            print(f"  Running {algo_name} algorithm...")
-            results = []
-            
-            param_names = list(config['params'].keys())
-            param_values = list(config['params'].values())
-            
-            for combination in product(*param_values):
-                params = dict(zip(param_names, combination))
-                
-                try:
-                    distance = run_experiment(config, tsp_file, params)
-                    if distance:
-                        results.append((params, distance))
-                except subprocess.CalledProcessError as e:
-                    print(f"Error with {params}: {e}")
-            
-            if results:
-                plot_results(results, algo_name, tsp_file)
+    tsp_file = "kroA100.tsp"
+    qdt_points = 100
+    for algo_name, config in ALGORITHMS.items():
+        print(f"  Running {algo_name} algorithm...")
+        results = []
+
+        if algo_name == "genetic":
+            shortest_distance = math.inf
+            shortest_hyperparameters = {}
+            for _ in range(20):
+                population_size = randint(qdt_points * 2, qdt_points * 6)
+                mutation_rate = random.uniform(0, 1)
+                elite = random.randint(2, population_size // 10)
+                hyperparameters = {
+                    '-pop': population_size,
+                    '-mut': mutation_rate,
+                    '-elite': elite
+                }
+                distance = run_experiment(config, tsp_file, {
+                    '-pop': population_size,
+                    '-mut': mutation_rate,
+                    '-elite': elite
+                })
+                print(distance)
+                print(hyperparameters)
+                if distance < shortest_distance:
+                    shortest_distance = distance
+                    shortest_hyperparameters = hyperparameters
+
+            print(shortest_distance)
+            print(shortest_hyperparameters)
+
+
+            # param_names = list(config['params'].keys())
+            # param_values = list(config['params'].values())
+            #
+            # for combination in product(*param_values):
+            #     params = dict(zip(param_names, combination))
+            #
+            #     try:
+            #         distance = run_experiment(config, tsp_file, params)
+            #         if distance:
+            #             results.append((params, distance))
+            #     except subprocess.CalledProcessError as e:
+            #         print(f"Error with {params}: {e}")
+            #
+            # if results:
+            #     plot_results(results, algo_name, tsp_file)
+
 
 if __name__ == "__main__":
     main()
