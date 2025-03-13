@@ -1,182 +1,133 @@
 import json
-import math
-import os
-import random
 import subprocess
-from random import randint
-
-import matplotlib.pyplot as plt
+import time
 import re
-from itertools import product
-from collections import defaultdict
+import os
+import matplotlib.pyplot as plt
 
+# Diretórios de entrada e resultados
 INPUT_DIR = "tsp_maps"
 RESULTS_DIR = "results"
-ALGORITHMS = {
-    'genetic': {
-        'exec': './genetic',
-        'params': {
-            '-pop': [100, 200],
-            '-mut': [0.01, 0.05],
-            '-elite': [5, 10]
-        }
-    },
-    'annealing': {
-        'exec': './annealing',
-        'params': {
-            '-temp': [10000, 50000],
-            '-cooling': [0.999, 0.9999],
-            '-iters': [10000]
-        }
-    },
-    'aco': {
-        'exec': './aco',
-        'params': {
-            '-ants': [50, 100],
-            '-alpha': [1, 2],
-            '-beta': [2, 5]
-        }
-    }
+HYPERPARAMETERS_FILE = "best_hyperparameters.json"  # ajuste o nome do arquivo se necessário
+
+# Mapeamento dos executáveis dos algoritmos
+ALGORITHMS_EXEC = {
+    "genetic": "./genetic",
+    "annealing": "./annealing",
+    "aco": "./aco"
 }
 
+def extrair_numero(nome):
+    """
+    Extrai o número de pontos a partir do nome do arquivo (ex.: "eil51" -> 51)
+    """
+    m = re.search(r'\d+', nome)
+    return int(m.group()) if m else None
 
-def get_tsp_files():
-    """Get all .tsp files in input directory"""
-    return [f for f in os.listdir(INPUT_DIR) if f.endswith('.tsp')]
+def ler_hyperparametros():
+    """
+    Lê o arquivo JSON com os melhores hiperparâmetros.
+    """
+    with open(HYPERPARAMETERS_FILE, "r") as f:
+        return json.load(f)
 
+def medir_tempo_execucao(cmd):
+    """
+    Executa o comando utilizando subprocess e retorna o tempo de execução.
+    """
+    inicio = time.time()
+    # Se necessário, capture a saída (supondo que os executáveis imprimam na saída padrão)
+    subprocess.run(cmd, capture_output=True, text=True, check=True)
+    fim = time.time()
+    return fim - inicio
 
-def run_experiment(algorithm, tsp_file, params):
-    """Execute Go program for a specific TSP file"""
-    cmd = [algorithm['exec'], '-input', os.path.join(INPUT_DIR, tsp_file)]
-    for k, v in params.items():
-        cmd.extend([k, str(v)])
-
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        check=True
-    )
-
-    match = re.search(r'Best route distance: (\d+\.\d+)', result.stdout)
-    return float(match.group(1)) if match else None
-
-
-def plot_results(results, algorithm, tsp_file):
-    """Generate plots for specific TSP file"""
-    plt.figure(figsize=(12, 6))
-    os.makedirs(os.path.join(RESULTS_DIR, tsp_file), exist_ok=True)
-
-    param_groups = defaultdict(list)
-    for params, distance in results:
-        main_param = list(params.keys())[0]
-        param_groups[main_param].append((params[main_param], distance))
-
-    for i, (param, values) in enumerate(param_groups.items(), 1):
-        plt.subplot(1, len(param_groups), i)
-        x, y = zip(*sorted(values))
-        plt.plot(x, y, 'o-')
-        plt.xlabel(param)
-        plt.ylabel('Distance')
-        plt.title(f'{tsp_file} - {param} vs Distance')
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(RESULTS_DIR, tsp_file, f'{algorithm}.png'))
+def plot_tempo_execucao(exec_times):
+    """
+    Gera o gráfico de tempo de execução.
+    exec_times: dicionário no formato {algoritmo: {nome_mapa: tempo, ...}, ...}
+    """
+    plt.figure(figsize=(10, 6))
+    for algo, dados in exec_times.items():
+        # Ordena os itens de acordo com o número de pontos
+        items = sorted(dados.items(), key=lambda x: extrair_numero(x[0]))
+        x = [extrair_numero(nome) for nome, _ in items]
+        y = [tempo for _, tempo in items]
+        plt.plot(x, y, marker="o", label=algo)
+    plt.xlabel("Número de pontos")
+    plt.ylabel("Tempo de execução (s)")
+    plt.title("Tempo de execução dos algoritmos")
+    plt.legend()
+    plt.grid(True)
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+    plt.savefig(os.path.join(RESULTS_DIR, "tempos_execucao.png"))
     plt.close()
 
-
-# def choose_best_hyperparameter():
-#     tsp_files = get_tsp_files()
-#     for tsp_file in tsp_files:
-#
-#         for _ in range(10):
-
+def plot_distancias(distancias):
+    """
+    Gera o gráfico de menores distâncias encontradas.
+    distancias: dicionário no formato {algoritmo: {nome_mapa: distância, ...}, ...}
+    """
+    plt.figure(figsize=(10, 6))
+    for algo, dados in distancias.items():
+        # Ordena os itens de acordo com o número de pontos
+        items = sorted(dados.items(), key=lambda x: extrair_numero(x[0]))
+        x = [extrair_numero(nome) for nome, _ in items]
+        y = [dist for _, dist in items]
+        plt.plot(x, y, marker="o", label=algo)
+    plt.xlabel("Número de pontos")
+    plt.ylabel("Menor distância encontrada")
+    plt.title("Menores distâncias por algoritmo")
+    plt.legend()
+    plt.grid(True)
+    plt.savefig(os.path.join(RESULTS_DIR, "distancias_minimas.png"))
+    plt.close()
 
 def main():
-    tsp_files = get_tsp_files()
-    answer = {}
-    for tsp_file in tsp_files:
-        print(f"\nProcessing {tsp_file}...")
-        qdt_points = int(re.search(r"\d+", tsp_file).group())
-        answer[tsp_file.split(".tsp")[0]] = {}
-        for algo_name, config in ALGORITHMS.items():
-            print(f"  Running {algo_name} algorithm...")
-            results = []
+    # Lê os hiperparâmetros a partir do arquivo JSON
+    hyper_data = ler_hyperparametros()
 
-            shortest_distance = math.inf
-            shortest_hyperparameters = {}
-            if algo_name == "genetic":
-                for _ in range(20):
-                    population_size = randint(qdt_points * 2, qdt_points * 6)
-                    mutation_rate = random.uniform(0, 1)
-                    elite = random.randint(2, population_size // 10)
-                    hyperparameters = {
-                        '-pop': population_size,
-                        '-mut': mutation_rate,
-                        '-elite': elite
-                    }
-                    distance = run_experiment(config, tsp_file, {
-                        '-pop': population_size,
-                        '-mut': mutation_rate,
-                        '-elite': elite
-                    })
-                    print(distance)
-                    print(hyperparameters)
-                    if distance < shortest_distance:
-                        shortest_distance = distance
-                        shortest_hyperparameters = hyperparameters
+    # Dicionários para armazenar os tempos de execução e as distâncias
+    exec_times = {"genetic": {}, "annealing": {}, "aco": {}}
+    distancias = {"genetic": {}, "annealing": {}, "aco": {}}
 
-                print("Melhores hyperparametros do algoritmo genetico")
-                print(shortest_distance)
-                print(shortest_hyperparameters)
-                answer[tsp_file.split(".tsp")[0]]["genetic"] = {"shortest_distance": shortest_distance, "params": shortest_hyperparameters}
-            elif algo_name == "aco":
-                for _ in range(40):
-                    ants = randint(qdt_points * 2, qdt_points * 6)
-                    alfa = random.uniform(1, 5)
-                    beta = random.uniform(1, 5)
-                    hyperparameters = {
-                        '-ants': ants,
-                        '-alpha': alfa,
-                        '-beta': beta,
-                        "-iters": 500
-                    }
-                    distance = run_experiment(config, tsp_file, hyperparameters)
-                    print(distance)
-                    print(hyperparameters)
-                    if distance < shortest_distance:
-                        shortest_distance = distance
-                        shortest_hyperparameters = hyperparameters
-                print("Melhores hyperparametros do algoritmo genetico")
-                print(shortest_distance)
-                print(shortest_hyperparameters)
-                answer[tsp_file.split(".tsp")[0]]["aco"] = {
-                "shortest_distance" : shortest_distance, "params": shortest_hyperparameters
-                }
-            elif algo_name == "annealing":
-                for _ in range(20):
-                    temperature = random.uniform(10000, 100000)
-                    cooling = random.uniform(0.9, 0.9999)
+    # Para cada mapa presente no arquivo JSON (por exemplo, "eil51", "berlin52", etc.)
+    for tsp_name, algos in hyper_data.items():
+        # Monta o caminho completo para o arquivo .tsp
+        tsp_file = os.path.join(INPUT_DIR, tsp_name + ".tsp")
+        for algo in ["genetic", "annealing", "aco"]:
+            if algo not in algos:
+                continue
+            print(algos)
+            # Recupera os hiperparâmetros e a menor distância encontrada
+            print(algos[algo])
+            params = algos[algo]["params"]
+            if "shortest_distance" in algos[algo]:
+                distancia = algos[algo]["shortest_distance"]
+            elif "shortestDistance" in algos[algo]:
+                distancia = algos[algo]["shortestDistance"]
+            else:
+                distancia = None
+            distancias[algo][tsp_name] = distancia
 
-                    hyperparameters = {
-                        "-temp": temperature,
-                        "-cooling": cooling
-                    }
-                    distance = run_experiment(config, tsp_file, hyperparameters)
-                    print(distance)
-                    print(hyperparameters)
-                    if distance < shortest_distance:
-                        shortest_distance = distance
-                        shortest_hyperparameters = hyperparameters
+            # Monta o comando: [executável, "-input", caminho_do_arquivo, ... hiperparâmetros]
+            cmd = [ALGORITHMS_EXEC[algo], "-input", tsp_file]
+            for chave, valor in params.items():
+                cmd.extend([chave, str(valor)])
+            print(f"Executando {algo} para {tsp_name} com o comando: {' '.join(cmd)}")
 
-                    print("Melhores hyperparametros do anneling")
-                    print(shortest_distance)
-                    print(shortest_hyperparameters)
-                    answer[tsp_file.split(".tsp")[0]]["annealing"] = {
-                        "shortest_distance": shortest_distance, "params": shortest_hyperparameters
-                    }
+            try:
+                tempo = medir_tempo_execucao(cmd)
+                exec_times[algo][tsp_name] = tempo
+                print(f"Tempo de execução: {tempo:.2f} s")
+            except Exception as e:
+                print(f"Erro ao executar {algo} para {tsp_name}: {e}")
+                exec_times[algo][tsp_name] = None
 
-    with open("best_hyperparameters2.json", "w") as f:
-        f.write(json.dumps(answer))
+    # Gera os gráficos
+    plot_tempo_execucao(exec_times)
+    plot_distancias(distancias)
+    print("Gráficos gerados na pasta:", RESULTS_DIR)
+
 if __name__ == "__main__":
     main()
+
