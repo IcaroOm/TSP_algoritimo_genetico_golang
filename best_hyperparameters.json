@@ -24,22 +24,6 @@
       }
     }
   },
-  "pr76": {
-    "genetic": {
-      "shortestDistance": 131948.67,
-      "params": {"-pop": 394, "-mut": 0.33778154008779326, "-elite": 22}
-    },
-    "annealing": {
-      "shortestDistance":109676.62,
-      "params": {"-temp": 40304.592427771255, "-cooling": 0.9692523350961358}
-    },
-    "aco": {
-      "genetic": {
-        "shortestDistance": 113511.02,
-        "params": {"-ants": 213, "-alpha": 2, "-beta": 1}
-      }
-    }
-  },
   "st70": {
     "genetic": {
       "shortestDistance": 857.75,
